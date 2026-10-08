@@ -1,0 +1,2044 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Spotter Log</title>
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#14213D">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" href="icon.png">
+<link rel="apple-touch-icon" href="icon.png">
+<meta name="mobile-web-app-capable" content="yes">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@500;600;700&family=Barlow:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #F2F5F8;
+    --surface: #FFFFFF;
+    --ink: #14213D;
+    --ink-soft: #55627A;
+    --line: #D5DCE6;
+    --accent: #FFC20E;
+    --accent-ink: #14213D;
+    --sky: #2F6FA3;
+    --danger: #B3261E;
+    --font-display: "Barlow Condensed", "Arial Narrow", "Roboto Condensed", sans-serif;
+    --font-body: "Barlow", system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+    box-sizing: border-box;
+    padding-top: env(safe-area-inset-top, 0px);
+    padding-bottom: env(safe-area-inset-bottom, 0px);
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --bg: #0E1626;
+      --surface: #17223A;
+      --ink: #E9EEF6;
+      --ink-soft: #9AA8C1;
+      --line: #2B3A57;
+      --sky: #6FB0E6;
+      --danger: #F2928C;
+    }
+  }
+  :root[data-theme="dark"] {
+    --bg: #0E1626;
+    --surface: #17223A;
+    --ink: #E9EEF6;
+    --ink-soft: #9AA8C1;
+    --line: #2B3A57;
+    --sky: #6FB0E6;
+    --danger: #F2928C;
+  }
+  html { scroll-padding-top: env(safe-area-inset-top, 0px); }
+  *, *::before, *::after { box-sizing: inherit; }
+  body {
+    margin: 0;
+    background: var(--bg);
+    color: var(--ink);
+    font-family: var(--font-body);
+    font-size: 17px;
+    line-height: 1.4;
+    -webkit-tap-highlight-color: transparent;
+  }
+  .app { max-width: 560px; margin: 0 auto; padding: 0 16px 96px; }
+
+  header.top { padding: 22px 0 14px; }
+  header.top h1 {
+    margin: 0;
+    font-family: var(--font-display);
+    font-weight: 700;
+    font-size: 40px;
+    line-height: 1;
+    letter-spacing: 0.01em;
+  }
+  header.top p { margin: 6px 0 0; color: var(--ink-soft); font-size: 15px; }
+
+  .view[hidden] { display: none; }
+
+  /* Form */
+  form { display: block; }
+  .field { margin-bottom: 14px; }
+  .row { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+  label, .label {
+    display: block;
+    margin-bottom: 5px;
+    font-weight: 600;
+    font-size: 15px;
+    color: var(--ink-soft);
+  }
+  input[type="text"], input[type="date"], textarea {
+    width: 100%;
+    font: inherit;
+    color: var(--ink);
+    background: var(--surface);
+    border: 1.5px solid var(--line);
+    border-radius: 10px;
+    padding: 12px 13px;
+    min-height: 48px;
+    appearance: none;
+    -webkit-appearance: none;
+  }
+  textarea { min-height: 96px; resize: vertical; }
+  input:focus-visible, textarea:focus-visible, button:focus-visible, .file-btn:focus-within {
+    outline: 3px solid var(--sky);
+    outline-offset: 1px;
+  }
+  input.reg {
+    font-family: var(--font-display);
+    font-weight: 600;
+    font-size: 24px;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+  }
+
+  .photo-zone {
+    border: 1.5px dashed var(--line);
+    border-radius: 12px;
+    padding: 12px;
+    background: var(--surface);
+  }
+  .file-btn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    min-height: 48px;
+    border-radius: 10px;
+    border: 1.5px solid var(--ink);
+    font-weight: 600;
+    cursor: pointer;
+    position: relative;
+  }
+  .file-btn input { position: absolute; inset: 0; opacity: 0; width: 100%; height: 100%; cursor: pointer; }
+  .thumbs { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; margin-top: 10px; }
+  .thumbs:empty { display: none; }
+  .thumb { position: relative; aspect-ratio: 1; border-radius: 8px; overflow: hidden; background: var(--line); }
+  .thumb img { width: 100%; height: 100%; object-fit: cover; display: block; }
+  .thumb button {
+    position: absolute; top: 4px; right: 4px;
+    width: 28px; height: 28px; border-radius: 50%;
+    border: none; background: rgba(20,33,61,.85); color: #fff;
+    font-size: 16px; line-height: 1; cursor: pointer;
+  }
+  .hint { margin: 8px 0 0; font-size: 14px; color: var(--ink-soft); }
+
+  .btn-primary {
+    width: 100%;
+    min-height: 56px;
+    margin-top: 6px;
+    border: none;
+    border-radius: 12px;
+    background: var(--accent);
+    color: var(--accent-ink);
+    font-family: var(--font-display);
+    font-weight: 700;
+    font-size: 24px;
+    letter-spacing: 0.03em;
+    cursor: pointer;
+  }
+  .btn-primary:active { transform: translateY(1px); }
+  .btn-primary:disabled { opacity: .6; }
+
+  /* Log */
+  .empty {
+    text-align: center;
+    color: var(--ink-soft);
+    padding: 48px 12px;
+  }
+  .empty strong { display: block; color: var(--ink); font-family: var(--font-display); font-size: 26px; margin-bottom: 4px; }
+  .count { color: var(--ink-soft); font-size: 15px; margin: 0 0 10px; }
+  .suggest {
+    display: inline-block;
+    margin-top: 6px;
+    min-height: 40px;
+    padding: 0 14px;
+    border: 1.5px solid var(--accent);
+    background: color-mix(in srgb, var(--accent) 22%, transparent);
+    color: var(--ink);
+    border-radius: 20px;
+    font: inherit;
+    font-weight: 600;
+    font-size: 15px;
+    cursor: pointer;
+    text-align: left;
+  }
+  .suggest[hidden] { display: none; }
+
+  .day {
+    position: sticky;
+    top: env(safe-area-inset-top, 0px);
+    z-index: 5;
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    background: var(--bg);
+    margin: 10px 0 0;
+    padding: 8px 0 5px;
+    border-bottom: 2.5px solid var(--ink);
+  }
+  .day h2 {
+    margin: 0;
+    font-family: var(--font-display);
+    font-weight: 700;
+    font-size: 26px;
+    line-height: 1;
+    letter-spacing: 0.01em;
+  }
+  .day .n { color: var(--ink-soft); font-size: 14px; font-weight: 600; }
+  .place {
+    display: flex;
+    justify-content: space-between;
+    gap: 8px;
+    margin: 8px 0 4px;
+    font-weight: 600;
+    font-size: 15px;
+    color: var(--sky);
+  }
+  .place .n { color: var(--ink-soft); font-weight: 500; }
+
+  .entry {
+    background: var(--surface);
+    border: 1px solid var(--line);
+    border-radius: 10px;
+    margin-bottom: 4px;
+    overflow: hidden;
+  }
+  .entry .line {
+    display: grid;
+    grid-template-columns: 46px 1fr;
+    gap: 10px;
+    align-items: center;
+    padding: 5px;
+  }
+  .entry .pic {
+    position: relative;
+    width: 46px; height: 46px;
+    border-radius: 7px;
+    overflow: hidden;
+    background: var(--line);
+    border: none; padding: 0;
+    color: var(--ink-soft);
+    cursor: pointer;
+    display: grid; place-items: center;
+    font-size: 22px;
+  }
+  .entry .pic img { width: 100%; height: 100%; object-fit: cover; display: block; }
+  .entry .pic .n {
+    position: absolute; right: 2px; bottom: 2px;
+    background: rgba(20,33,61,.85); color: #fff;
+    font-size: 11px; font-weight: 600; line-height: 1;
+    padding: 2px 5px; border-radius: 8px;
+  }
+  .entry .txt {
+    display: block;
+    min-width: 0;
+    width: 100%;
+    min-height: 46px;
+    padding: 0;
+    background: none; border: none;
+    font: inherit; color: inherit; text-align: left;
+    cursor: pointer;
+  }
+  .entry .l1, .entry .l2 {
+    display: block;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+  .entry .l1 { line-height: 1.15; }
+  .entry .reg {
+    font-family: var(--font-display);
+    font-weight: 700;
+    font-size: 21px;
+    letter-spacing: 0.05em;
+    text-transform: uppercase;
+  }
+  .entry .ty { font-weight: 600; font-size: 15px; margin-left: 6px; }
+  .entry .l2 { font-size: 14px; color: var(--ink-soft); line-height: 1.25; }
+  .entry .more {
+    padding: 0 10px 8px 61px;
+    font-size: 15px;
+  }
+  .entry .more[hidden] { display: none; }
+  .entry .more p { margin: 2px 0; }
+  .entry .more .del {
+    margin-top: 4px;
+    background: none; border: none; padding: 6px 0;
+    color: var(--danger); font: inherit; font-size: 14px; font-weight: 600; cursor: pointer;
+  }
+
+  .viewer .cap { padding: 10px 16px 14px; color: #fff; font-size: 15px; line-height: 1.35; max-height: 28vh; overflow-y: auto; }
+  .viewer .cap .t { font-family: var(--font-display); font-weight: 700; font-size: 24px; letter-spacing: 0.05em; text-transform: uppercase; }
+
+  .seg { display: grid; grid-template-columns: repeat(3, 1fr); border: 1.5px solid var(--ink); border-radius: 10px; overflow: hidden; margin-bottom: 10px; }
+  .seg button {
+    min-height: 44px; background: transparent; border: none; color: var(--ink);
+    font-family: var(--font-display); font-weight: 600; font-size: 20px; letter-spacing: 0.04em; cursor: pointer;
+  }
+  .seg button[aria-pressed="true"] { background: var(--ink); color: var(--bg); }
+  .seg.seg4 { grid-template-columns: repeat(4, 1fr); }
+  .searchbar { display: flex; gap: 8px; margin-bottom: 8px; }
+  .searchbar input, .filters select {
+    font: inherit; color: var(--ink); background: var(--surface);
+    border: 1.5px solid var(--line); border-radius: 10px;
+    padding: 0 13px; min-height: 48px; width: 100%;
+    appearance: none; -webkit-appearance: none;
+  }
+  .searchbar input { flex: 1; min-width: 0; }
+  .searchbar .chip { flex: none; min-height: 48px; border-radius: 10px; }
+  .filters { padding-top: 6px; }
+  .filters[hidden] { display: none; }
+  .filters select {
+    padding-right: 36px;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='14' height='9' viewBox='0 0 14 9'%3E%3Cpath d='M1 1l6 6 6-6' fill='none' stroke='%238a97ad' stroke-width='2'/%3E%3C/svg%3E");
+    background-repeat: no-repeat; background-position: right 13px center;
+  }
+  .grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 4px; }
+  .tile { position: relative; aspect-ratio: 1; padding: 0; border: none; border-radius: 6px; overflow: hidden; background: var(--line); cursor: pointer; }
+  .tile img { width: 100%; height: 100%; object-fit: cover; display: block; }
+  .tile .tcap {
+    position: absolute; left: 0; right: 0; bottom: 0; padding: 14px 5px 3px;
+    background: linear-gradient(transparent, rgba(8,12,22,.82)); color: #fff;
+    font-family: var(--font-display); font-weight: 600; font-size: 14px; letter-spacing: 0.04em;
+    text-align: left; text-transform: uppercase; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+  }
+  .tiles { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; }
+  .stat { background: var(--surface); border: 1px solid var(--line); border-radius: 10px; padding: 8px 10px; }
+  .stat b { display: block; font-family: var(--font-display); font-size: 32px; line-height: 1; }
+  .stat span { font-size: 13px; color: var(--ink-soft); }
+  .statrow {
+    position: relative; display: flex; justify-content: space-between; align-items: center; gap: 10px;
+    width: 100%; min-height: 40px; padding: 0 10px; margin-bottom: 3px;
+    background: var(--surface); border: 1px solid var(--line); border-radius: 8px; overflow: hidden;
+    font: inherit; color: var(--ink); text-align: left; cursor: pointer;
+  }
+  .statrow .fill { position: absolute; left: 0; top: 0; bottom: 0; background: color-mix(in srgb, var(--accent) 38%, transparent); }
+  .statrow .lab { position: relative; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .statrow .num { position: relative; font-weight: 600; }
+
+  .hr { display: flex; align-items: baseline; gap: 10px; }
+  .notebtn {
+    background: none; border: none;
+    min-height: 32px; padding: 0 4px;
+    color: var(--sky);
+    font: inherit; font-size: 14px; font-weight: 600;
+    cursor: pointer;
+  }
+  .fnote {
+    margin: 4px 0 2px;
+    padding: 6px 10px;
+    border-left: 3px solid var(--accent);
+    background: var(--surface);
+    border-radius: 0 8px 8px 0;
+    font-size: 15px;
+  }
+  .fnote[hidden] { display: none; }
+  .fnote p { margin: 0; white-space: pre-wrap; }
+  .fnote textarea { min-height: 76px; }
+  .fnote-actions { display: flex; gap: 10px; margin-top: 8px; }
+  .fnote-actions button {
+    min-height: 40px; padding: 0 18px;
+    border-radius: 10px;
+    font: inherit; font-weight: 600; cursor: pointer;
+    border: 1.5px solid var(--ink); background: transparent; color: var(--ink);
+  }
+  .fnote-actions .save { background: var(--accent); border-color: var(--accent); color: var(--accent-ink); }
+
+  .btn-secondary {
+    width: 100%;
+    min-height: 48px;
+    margin-top: 8px;
+    border: 1.5px solid var(--ink);
+    border-radius: 12px;
+    background: transparent;
+    color: var(--ink);
+    font: inherit;
+    font-weight: 600;
+    cursor: pointer;
+  }
+  .btn-secondary[hidden] { display: none; }
+  .btn-row { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+  .sec {
+    margin: 26px 0 10px;
+    padding-bottom: 5px;
+    border-bottom: 2.5px solid var(--ink);
+    font-family: var(--font-display);
+    font-weight: 700;
+    font-size: 26px;
+    line-height: 1;
+  }
+  .sec.first { margin-top: 4px; }
+  .chips { display: flex; flex-wrap: wrap; gap: 8px; }
+  .chip {
+    min-height: 40px;
+    padding: 0 14px;
+    border: 1.5px solid var(--line);
+    border-radius: 20px;
+    background: var(--surface);
+    color: var(--ink);
+    font: inherit; font-weight: 600; font-size: 15px;
+    cursor: pointer;
+  }
+  .check { display: flex; gap: 10px; align-items: center; margin: 4px 0 8px; color: var(--ink); font-weight: 500; }
+  .check input { width: 22px; height: 22px; accent-color: var(--ink); }
+  .preview {
+    margin-top: 10px;
+    padding: 12px;
+    background: #fff;
+    color: #14213D;
+    border: 1.5px solid var(--line);
+    border-radius: 10px;
+    overflow-x: auto;
+  }
+  .restore { margin-top: 22px; }
+
+  .entry .more .actions { display: flex; gap: 24px; }
+  .entry .more .edit {
+    margin-top: 4px;
+    background: none; border: none; padding: 6px 0;
+    color: var(--sky); font: inherit; font-size: 14px; font-weight: 600; cursor: pointer;
+  }
+
+  /* Bottom nav */
+  nav.tabs {
+    position: fixed;
+    left: 0; right: 0;
+    bottom: 0;
+    padding-bottom: env(safe-area-inset-bottom, 0px);
+    background: var(--ink);
+    display: flex;
+    justify-content: center;
+    z-index: 10;
+  }
+  nav.tabs .inner { display: flex; width: 100%; max-width: 560px; }
+  nav.tabs button {
+    flex: 1;
+    min-height: 60px;
+    background: none; border: none;
+    color: #B9C4D8;
+    font-family: var(--font-display);
+    font-weight: 600;
+    font-size: 20px;
+    letter-spacing: 0.04em;
+    cursor: pointer;
+    border-top: 4px solid transparent;
+  }
+  nav.tabs button[aria-selected="true"] { color: #fff; border-top-color: var(--accent); }
+  nav.tabs button:focus-visible { outline-offset: -4px; }
+
+  /* Toast */
+  .toast {
+    position: fixed;
+    left: 50%;
+    bottom: calc(80px + env(safe-area-inset-bottom, 0px));
+    transform: translate(-50%, 20px);
+    background: var(--ink); color: #fff;
+    padding: 12px 18px; border-radius: 10px;
+    font-weight: 600;
+    opacity: 0; pointer-events: none;
+    transition: opacity .2s, transform .2s;
+    z-index: 30;
+    max-width: calc(100% - 32px);
+  }
+  .toast.show { opacity: 1; transform: translate(-50%, 0); }
+  .toast.err { background: var(--danger); color: #fff; }
+
+  /* Viewer */
+  .viewer {
+    position: fixed; inset: 0; z-index: 40;
+    background: rgba(8,12,22,.96);
+    display: none;
+    flex-direction: column;
+    padding-top: env(safe-area-inset-top, 0px);
+    padding-bottom: env(safe-area-inset-bottom, 0px);
+  }
+  .viewer.open { display: flex; }
+  .viewer .bar { display: flex; justify-content: flex-end; padding: 10px; }
+  .viewer .bar button {
+    background: #fff; color: #14213D; border: none; border-radius: 10px;
+    min-height: 44px; padding: 0 18px; font: inherit; font-weight: 600; cursor: pointer;
+  }
+  .viewer .strip {
+    flex: 1; display: flex; overflow-x: auto; scroll-snap-type: x mandatory;
+  }
+  .viewer .strip img {
+    flex: 0 0 100%; width: 100%; height: 100%; object-fit: contain; scroll-snap-align: center;
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .toast { transition: none; }
+  }
+</style>
+</head>
+<body>
+<div class="app">
+  <header class="top">
+    <h1 id="title">New sighting</h1>
+    <p id="subtitle">Log what just flew by.</p>
+  </header>
+
+  <main>
+    <section class="view" id="view-entry">
+      <form id="form" autocomplete="off" novalidate>
+        <div class="row">
+          <div class="field">
+            <label for="from">From</label>
+            <input type="text" id="from" list="dl-airports" placeholder="e.g. SEA" autocapitalize="characters">
+          </div>
+          <div class="field">
+            <label for="to">To</label>
+            <input type="text" id="to" list="dl-airports" placeholder="e.g. LAX" autocapitalize="characters">
+          </div>
+        </div>
+
+        <div class="field">
+          <label for="location">Location spotted</label>
+          <input type="text" id="location" list="dl-locations" placeholder="e.g. Fence at Boeing Field" autocapitalize="words">
+        </div>
+
+        <div class="field">
+          <label for="date">Date</label>
+          <input type="date" id="date">
+        </div>
+
+        <div class="field">
+          <label for="airline">Airline</label>
+          <input type="text" id="airline" list="dl-airlines" placeholder="Code or name, e.g. AS" autocapitalize="words" spellcheck="false">
+          <button type="button" class="suggest" id="airline-suggest" hidden></button>
+        </div>
+
+        <div class="field">
+          <label for="type">Airplane type</label>
+          <input type="text" id="type" list="dl-types" placeholder="Code or name, e.g. 7M9" autocapitalize="words" spellcheck="false">
+          <button type="button" class="suggest" id="type-suggest" hidden></button>
+        </div>
+
+        <div class="field">
+          <label for="reg">Aircraft registration</label>
+          <input type="text" id="reg" class="reg" placeholder="N123AB" autocapitalize="characters" spellcheck="false">
+        </div>
+
+        <div class="field">
+          <label for="notes">Notes</label>
+          <textarea id="notes" placeholder="Livery, runway, anything odd"></textarea>
+        </div>
+
+        <div class="field">
+          <span class="label">Photos</span>
+          <div class="photo-zone">
+            <label class="file-btn">
+              <span>Take or choose photos</span>
+              <input type="file" id="photos" accept="image/*" multiple>
+            </label>
+            <div class="thumbs" id="thumbs"></div>
+            <p class="hint" id="photo-hint">You can add more than one. Photos are lightly shrunk to save space.</p>
+          </div>
+        </div>
+
+        <button type="submit" class="btn-primary" id="save">Save sighting</button>
+        <button type="button" class="btn-secondary" id="cancel-edit" hidden>Cancel edit</button>
+      </form>
+    </section>
+
+    <section class="view" id="view-log" hidden>
+      <div class="seg" role="group" aria-label="Log view">
+        <button type="button" data-lv="list" aria-pressed="true">List</button>
+        <button type="button" data-lv="photos" aria-pressed="false">Photos</button>
+        <button type="button" data-lv="stats" aria-pressed="false">Stats</button>
+      </div>
+      <div class="searchbar">
+        <input type="search" id="q" placeholder="Search reg, airline, type, place, notes" aria-label="Search" autocomplete="off" spellcheck="false">
+        <button type="button" class="chip" id="filter-toggle" aria-expanded="false">Filters</button>
+      </div>
+      <div class="filters" id="filters" hidden>
+        <div class="field"><label for="f-airline">Airline</label><select id="f-airline"></select></div>
+        <div class="field"><label for="f-type">Airplane type</label><select id="f-type"></select></div>
+        <div class="field"><label for="f-location">Location</label><select id="f-location"></select></div>
+        <div class="row">
+          <div class="field"><label for="f-from">From</label><input type="date" id="f-from"></div>
+          <div class="field"><label for="f-to">To</label><input type="date" id="f-to"></div>
+        </div>
+        <button type="button" class="btn-secondary" id="f-clear">Clear all filters</button>
+      </div>
+      <p class="count" id="log-count"></p>
+      <div id="log-list"></div>
+      <div id="log-photos" hidden></div>
+      <div id="log-stats" hidden></div>
+    </section>
+    <section class="view" id="view-export" hidden>
+      <h2 class="sec first">Date range</h2>
+      <div class="row">
+        <div class="field">
+          <label for="exp-from">From</label>
+          <input type="date" id="exp-from">
+        </div>
+        <div class="field">
+          <label for="exp-to">To</label>
+          <input type="date" id="exp-to">
+        </div>
+      </div>
+      <div class="chips">
+        <button type="button" class="chip" data-range="7">Last 7 days</button>
+        <button type="button" class="chip" data-range="30">Last 30 days</button>
+        <button type="button" class="chip" data-range="all">All dates</button>
+      </div>
+      <p class="hint" id="exp-summary"></p>
+
+      <h2 class="sec">Email summary</h2>
+      <p class="hint">A compact list grouped by date and location, with photos, made for pasting into an Outlook message.</p>
+      <span class="label">Photo size</span>
+      <div class="seg seg4" id="seg-size" role="group" aria-label="Photo size">
+        <button type="button" data-v="100" aria-pressed="false">Small</button>
+        <button type="button" data-v="160" aria-pressed="false">Medium</button>
+        <button type="button" data-v="240" aria-pressed="true">Large</button>
+        <button type="button" data-v="320" aria-pressed="false">Huge</button>
+      </div>
+      <span class="label">Photo quality</span>
+      <div class="seg" id="seg-qual" role="group" aria-label="Photo quality">
+        <button type="button" data-v="standard" aria-pressed="false">Standard</button>
+        <button type="button" data-v="high" aria-pressed="true">High</button>
+        <button type="button" data-v="max" aria-pressed="false">Max</button>
+      </div>
+      <label class="check"><input type="checkbox" id="exp-allphotos"> Include every photo, not just the first</label>
+      <button type="button" class="btn-primary" id="email-copy">Copy for Outlook</button>
+      <div class="btn-row">
+        <button type="button" class="btn-secondary" id="email-preview-btn">Preview</button>
+        <button type="button" class="btn-secondary" id="email-download">Download .html</button>
+      </div>
+      <p class="hint" id="email-status" aria-live="polite"></p>
+      <div class="preview" id="email-preview" hidden></div>
+
+      <h2 class="sec">Full backup</h2>
+      <p class="hint">Every field plus the full-size photos for the dates above, in one file. Use the date range to keep it small.</p>
+      <button type="button" class="btn-primary" id="backup-download">Download backup (.json)</button>
+      <p class="hint" id="backup-status" aria-live="polite"></p>
+
+      <div class="restore">
+        <span class="label">Restore from a backup</span>
+        <label class="file-btn">
+          <span>Choose backup file</span>
+          <input type="file" id="restore-file" accept=".json,application/json">
+        </label>
+        <p class="hint" id="restore-status" aria-live="polite">Adds sightings from the file. Ones already on this phone are skipped.</p>
+      </div>
+    </section>
+  </main>
+</div>
+
+<datalist id="dl-airports"></datalist>
+<datalist id="dl-locations"></datalist>
+<datalist id="dl-airlines"></datalist>
+<datalist id="dl-types"></datalist>
+
+<nav class="tabs" role="tablist" aria-label="Pages">
+  <div class="inner">
+    <button role="tab" id="tab-entry" aria-selected="true" data-view="entry">New sighting</button>
+    <button role="tab" id="tab-log" aria-selected="false" data-view="log">Log</button>
+    <button role="tab" id="tab-export" aria-selected="false" data-view="export">Export</button>
+  </div>
+</nav>
+
+<div class="toast" id="toast" role="status" aria-live="polite"></div>
+
+<div class="viewer" id="viewer" aria-modal="true" role="dialog" aria-label="Photos">
+  <div class="bar"><button id="viewer-close">Close</button></div>
+  <div class="strip" id="viewer-strip"></div>
+  <div class="cap" id="viewer-cap"></div>
+</div>
+
+<script>
+(function () {
+  "use strict";
+
+  // ---------- Storage (IndexedDB, with in-memory fallback) ----------
+  var DB_NAME = "spotter-log", STORE = "sightings";
+  var db = null;
+  var memory = [];       // fallback if IndexedDB is unavailable
+  var memId = 1;
+  var memNotes = {};
+  var usingMemory = false;
+  var dataVersion = 0;   // bumps whenever data changes (invalidates the email cache)
+
+  function openDB() {
+    return new Promise(function (resolve, reject) {
+      try {
+        var req = indexedDB.open(DB_NAME, 2);
+        req.onupgradeneeded = function () {
+          var d = req.result;
+          if (!d.objectStoreNames.contains(STORE)) d.createObjectStore(STORE, { keyPath: "id", autoIncrement: true });
+          if (!d.objectStoreNames.contains("notes")) d.createObjectStore("notes", { keyPath: "key" });
+        };
+        req.onsuccess = function () { resolve(req.result); };
+        req.onerror = function () { reject(req.error); };
+        req.onblocked = function () { reject(new Error("blocked")); };
+      } catch (e) { reject(e); }
+    });
+  }
+
+  function dbAll() {
+    if (usingMemory) return Promise.resolve(memory.slice());
+    return new Promise(function (resolve, reject) {
+      var req = db.transaction(STORE, "readonly").objectStore(STORE).getAll();
+      req.onsuccess = function () { resolve(req.result); };
+      req.onerror = function () { reject(req.error); };
+    });
+  }
+  function dbAdd(entry) {
+    dataVersion++;
+    if (usingMemory) { entry.id = memId++; memory.push(entry); return Promise.resolve(entry.id); }
+    return new Promise(function (resolve, reject) {
+      var tx = db.transaction(STORE, "readwrite");
+      var req = tx.objectStore(STORE).add(entry);
+      tx.oncomplete = function () { resolve(req.result); };
+      tx.onerror = function () { reject(tx.error); };
+      tx.onabort = function () { reject(tx.error || new Error("aborted")); };
+    });
+  }
+  // Field notes for a day ("d|DATE") or a location within a day ("p|DATE|location")
+  function notesAll() {
+    if (usingMemory) return Promise.resolve(Object.assign({}, memNotes));
+    return new Promise(function (resolve, reject) {
+      var req = db.transaction("notes", "readonly").objectStore("notes").getAll();
+      req.onsuccess = function () {
+        var m = {};
+        req.result.forEach(function (r) { m[r.key] = r.text; });
+        resolve(m);
+      };
+      req.onerror = function () { reject(req.error); };
+    });
+  }
+  function noteSet(key, text) {
+    dataVersion++;
+    if (usingMemory) {
+      if (text) memNotes[key] = text; else delete memNotes[key];
+      return Promise.resolve();
+    }
+    return new Promise(function (resolve, reject) {
+      var tx = db.transaction("notes", "readwrite");
+      var st = tx.objectStore("notes");
+      if (text) st.put({ key: key, text: text }); else st.delete(key);
+      tx.oncomplete = function () { resolve(); };
+      tx.onerror = function () { reject(tx.error); };
+    });
+  }
+  function dbPut(entry) {
+    dataVersion++;
+    if (usingMemory) {
+      memory = memory.map(function (e) { return e.id === entry.id ? entry : e; });
+      return Promise.resolve(entry.id);
+    }
+    return new Promise(function (resolve, reject) {
+      var tx = db.transaction(STORE, "readwrite");
+      tx.objectStore(STORE).put(entry);
+      tx.oncomplete = function () { resolve(entry.id); };
+      tx.onerror = function () { reject(tx.error); };
+      tx.onabort = function () { reject(tx.error || new Error("aborted")); };
+    });
+  }
+  function dbDelete(id) {
+    dataVersion++;
+    if (usingMemory) { memory = memory.filter(function (e) { return e.id !== id; }); return Promise.resolve(); }
+    return new Promise(function (resolve, reject) {
+      var tx = db.transaction(STORE, "readwrite");
+      tx.objectStore(STORE).delete(id);
+      tx.oncomplete = function () { resolve(); };
+      tx.onerror = function () { reject(tx.error); };
+    });
+  }
+
+  // ---------- Helpers ----------
+  function $(id) { return document.getElementById(id); }
+  function todayStr() {
+    var d = new Date();
+    var m = String(d.getMonth() + 1).padStart(2, "0");
+    var day = String(d.getDate()).padStart(2, "0");
+    return d.getFullYear() + "-" + m + "-" + day;
+  }
+  function formatDate(s) {
+    if (!s) return "";
+    var p = s.split("-");
+    if (p.length !== 3) return s;
+    var d = new Date(+p[0], +p[1] - 1, +p[2]);
+    return d.toLocaleDateString(undefined, { year: "numeric", month: "short", day: "numeric" });
+  }
+  var toastTimer;
+  function toast(msg, isErr) {
+    var t = $("toast");
+    t.textContent = msg;
+    t.className = "toast show" + (isErr ? " err" : "");
+    clearTimeout(toastTimer);
+    toastTimer = setTimeout(function () { t.className = "toast"; }, isErr ? 4500 : 2200);
+  }
+
+  // Shrink a photo to max 1600px on the long side as JPEG
+  function compress(file) {
+    var MAX = 2560, QUALITY = 0.92;
+    function draw(src, w, h) {
+      var scale = Math.min(1, MAX / Math.max(w, h));
+      var c = document.createElement("canvas");
+      c.width = Math.round(w * scale);
+      c.height = Math.round(h * scale);
+      c.getContext("2d").drawImage(src, 0, 0, c.width, c.height);
+      return new Promise(function (resolve, reject) {
+        c.toBlob(function (b) { b ? resolve(b) : reject(new Error("toBlob failed")); }, "image/jpeg", QUALITY);
+      });
+    }
+    if (window.createImageBitmap) {
+      return createImageBitmap(file, { imageOrientation: "from-image" })
+        .then(function (bmp) { return draw(bmp, bmp.width, bmp.height); })
+        .catch(function () { return viaImg(); });
+    }
+    return viaImg();
+    function viaImg() {
+      return new Promise(function (resolve, reject) {
+        var url = URL.createObjectURL(file);
+        var img = new Image();
+        img.onload = function () {
+          draw(img, img.naturalWidth, img.naturalHeight).then(function (b) { URL.revokeObjectURL(url); resolve(b); }, reject);
+        };
+        img.onerror = function () { URL.revokeObjectURL(url); reject(new Error("bad image")); };
+        img.src = url;
+      });
+    }
+  }
+
+  // ---------- IATA code lookup ----------
+  var AIRLINES = {
+    "AA":"American Airlines","AS":"Alaska Airlines","B6":"JetBlue","DL":"Delta Air Lines","F9":"Frontier Airlines",
+    "G4":"Allegiant Air","HA":"Hawaiian Airlines","NK":"Spirit Airlines","UA":"United Airlines","WN":"Southwest Airlines",
+    "SY":"Sun Country Airlines","MX":"Breeze Airways","XP":"Avelo Airlines","QX":"Horizon Air","OO":"SkyWest Airlines",
+    "YX":"Republic Airways","9E":"Endeavor Air","MQ":"Envoy Air","OH":"PSA Airlines","YV":"Mesa Airlines",
+    "ZW":"Air Wisconsin","G7":"GoJet Airlines","C5":"CommuteAir","PT":"Piedmont Airlines","9K":"Cape Air",
+    "3M":"Silver Airways","7H":"Ravn Alaska","J8":"Bering Air","AC":"Air Canada","WS":"WestJet","PD":"Porter Airlines",
+    "TS":"Air Transat","F8":"Flair Airlines","QK":"Jazz Aviation","AM":"Aeromexico","Y4":"Volaris","VB":"Viva Aerobus",
+    "CM":"Copa Airlines","AV":"Avianca","LA":"LATAM Airlines","AR":"Aerolineas Argentinas","G3":"Gol Linhas Aereas",
+    "JJ":"LATAM Brasil","AD":"Azul Brazilian Airlines","BA":"British Airways","VS":"Virgin Atlantic","AF":"Air France",
+    "KL":"KLM","LH":"Lufthansa","LX":"Swiss","OS":"Austrian Airlines","SN":"Brussels Airlines","IB":"Iberia",
+    "VY":"Vueling","TP":"TAP Air Portugal","AZ":"ITA Airways","EI":"Aer Lingus","FR":"Ryanair","U2":"easyJet",
+    "W6":"Wizz Air","SK":"SAS Scandinavian Airlines","AY":"Finnair","FI":"Icelandair","DY":"Norwegian Air Shuttle",
+    "LO":"LOT Polish Airlines","TK":"Turkish Airlines","PC":"Pegasus Airlines","SU":"Aeroflot","EW":"Eurowings",
+    "DE":"Condor","LS":"Jet2","BT":"airBaltic","A3":"Aegean Airlines","OK":"Czech Airlines","HV":"Transavia",
+    "TO":"Transavia France","KM":"Air Malta","EK":"Emirates","EY":"Etihad Airways","QR":"Qatar Airways","SV":"Saudia",
+    "GF":"Gulf Air","WY":"Oman Air","KU":"Kuwait Airways","RJ":"Royal Jordanian","MS":"EgyptAir","ET":"Ethiopian Airlines",
+    "KQ":"Kenya Airways","SA":"South African Airways","AT":"Royal Air Maroc","LY":"El Al","AI":"Air India","6E":"IndiGo",
+    "UK":"Vistara","SG":"SpiceJet","SQ":"Singapore Airlines","TR":"Scoot","MH":"Malaysia Airlines","AK":"AirAsia",
+    "TG":"Thai Airways","VN":"Vietnam Airlines","PR":"Philippine Airlines","5J":"Cebu Pacific","GA":"Garuda Indonesia",
+    "CX":"Cathay Pacific","HX":"Hong Kong Airlines","KE":"Korean Air","OZ":"Asiana Airlines","7C":"Jeju Air",
+    "JL":"Japan Airlines","NH":"All Nippon Airways","MM":"Peach Aviation","CA":"Air China","CZ":"China Southern Airlines",
+    "MU":"China Eastern Airlines","HU":"Hainan Airlines","BR":"EVA Air","CI":"China Airlines","QF":"Qantas",
+    "JQ":"Jetstar","VA":"Virgin Australia","NZ":"Air New Zealand","FJ":"Fiji Airways",
+    "5X":"UPS Airlines","FX":"FedEx Express","K4":"Kalitta Air","5Y":"Atlas Air","CV":"Cargolux","KH":"Aloha Air Cargo"
+  };
+  var TYPES = {
+    "221":"A220-100","223":"A220-300","BC1":"A220-100","BC3":"A220-300",
+    "318":"A318","319":"A319","320":"A320","321":"A321","31N":"A319neo","32N":"A320neo","32Q":"A321neo",
+    "300":"A300","310":"A310","332":"A330-200","333":"A330-300","338":"A330-800","339":"A330-900",
+    "342":"A340-200","343":"A340-300","345":"A340-500","346":"A340-600","359":"A350-900","351":"A350-1000",
+    "388":"A380-800",
+    "717":"717-200","722":"727-200","733":"737-300","734":"737-400","735":"737-500","736":"737-600","737":"737-700",
+    "738":"737-800","739":"737-900","73J":"737-900ER","7M7":"737 MAX 7","7M8":"737 MAX 8","7M9":"737 MAX 9","7MJ":"737 MAX 10",
+    "744":"747-400","74H":"747-8","74N":"747-8F","74Y":"747-400F","752":"757-200","753":"757-300",
+    "762":"767-200","763":"767-300","764":"767-400","76W":"767-300 (winglets)","76F":"767-300F",
+    "772":"777-200","77L":"777-200LR","773":"777-300","77W":"777-300ER","77F":"777F",
+    "788":"787-8","789":"787-9","78X":"787-10","M80":"MD-80","M88":"MD-88","M90":"MD-90","M11":"MD-11","D10":"DC-10",
+    "E70":"E170","E75":"E175","E90":"E190","E95":"E195","275":"E175-E2","290":"E190-E2","295":"E195-E2",
+    "ER3":"ERJ-135","ERD":"ERJ-140","ER4":"ERJ-145",
+    "CR2":"CRJ-200","CR7":"CRJ-700","CR9":"CRJ-900","CRK":"CRJ-1000",
+    "DH1":"Dash 8-100","DH2":"Dash 8-200","DH3":"Dash 8-300","DH4":"Dash 8-400",
+    "AT4":"ATR 42","AT5":"ATR 42-500","AT7":"ATR 72","SF3":"Saab 340","SB2":"Saab 2000",
+    "100":"Fokker 100","F70":"Fokker 70"
+  };
+  var CUSTOM_KEY = "spotter-custom-codes";
+  var custom = { airline: {}, type: {} };
+  try {
+    var saved = JSON.parse(localStorage.getItem(CUSTOM_KEY) || "null");
+    if (saved && saved.airline && saved.type) custom = saved;
+  } catch (e) {}
+
+  var KINDS = {
+    airline: { table: AIRLINES, re: /^[A-Z0-9]{2}$/, len: 2 },
+    type:    { table: TYPES,    re: /^[A-Z0-9]{3}$/, len: 3 }
+  };
+
+  // "as" -> "AS - Alaska Airlines" (or null if not a known code)
+  function lookup(kind, raw) {
+    var k = KINDS[kind];
+    var code = (raw || "").trim().toUpperCase();
+    if (!k.re.test(code)) return null;
+    var name = custom[kind][code] || k.table[code];
+    return name ? code + " - " + name : null;
+  }
+  function resolveCode(kind, raw) {
+    return lookup(kind, raw) || raw;
+  }
+  // If you type "XY - Some Airline" for a code I don't know, remember it for next time
+  function learnCode(kind, text) {
+    var m = /^([A-Za-z0-9]+)\s*-\s*(.+)$/.exec(text || "");
+    if (!m) return;
+    var code = m[1].toUpperCase();
+    if (code.length !== KINDS[kind].len) return;
+    if (custom[kind][code] || KINDS[kind].table[code]) return;
+    custom[kind][code] = m[2].trim();
+    try { localStorage.setItem(CUSTOM_KEY, JSON.stringify(custom)); } catch (e) {}
+  }
+  function codeList(kind) {
+    var out = [];
+    var t = KINDS[kind].table;
+    Object.keys(custom[kind]).forEach(function (c) { out.push(c + " - " + custom[kind][c]); });
+    Object.keys(t).forEach(function (c) { if (!custom[kind][c]) out.push(c + " - " + t[c]); });
+    return out;
+  }
+  function wireLookup(kind) {
+    var input = $(kind), chip = $(kind + "-suggest");
+    function update() {
+      var m = lookup(kind, input.value);
+      if (m) { chip.textContent = "Use " + m; chip.hidden = false; chip.dataset.fill = m; }
+      else { chip.hidden = true; chip.dataset.fill = ""; }
+    }
+    input.addEventListener("input", update);
+    input.addEventListener("blur", function () {
+      var m = lookup(kind, input.value);
+      if (m) input.value = m;
+      update();
+    });
+    chip.addEventListener("click", function () {
+      if (chip.dataset.fill) input.value = chip.dataset.fill;
+      update();
+    });
+    input.addEventListener("change", update);
+  }
+  wireLookup("airline");
+  wireLookup("type");
+
+  // ---------- Entry form ----------
+  var pending = []; // { blob, url }
+
+  function renderThumbs() {
+    var box = $("thumbs");
+    box.textContent = "";
+    pending.forEach(function (p, i) {
+      var d = document.createElement("div");
+      d.className = "thumb";
+      var img = document.createElement("img");
+      img.src = p.url; img.alt = "Photo " + (i + 1);
+      var b = document.createElement("button");
+      b.type = "button"; b.textContent = "\u00D7"; b.setAttribute("aria-label", "Remove photo " + (i + 1));
+      b.addEventListener("click", function () {
+        URL.revokeObjectURL(p.url);
+        pending.splice(i, 1);
+        renderThumbs();
+      });
+      d.appendChild(img); d.appendChild(b);
+      box.appendChild(d);
+    });
+  }
+
+  $("photos").addEventListener("change", function (e) {
+    var files = Array.prototype.slice.call(e.target.files || []);
+    e.target.value = "";
+    if (!files.length) return;
+    $("photo-hint").textContent = "Preparing photos\u2026";
+    Promise.all(files.map(function (f) {
+      return compress(f).then(function (blob) {
+        return { blob: blob, url: URL.createObjectURL(blob) };
+      }).catch(function () { return null; });
+    })).then(function (res) {
+      var ok = res.filter(Boolean);
+      pending = pending.concat(ok);
+      renderThumbs();
+      $("photo-hint").textContent = ok.length < files.length
+        ? "Some files couldn\u2019t be read as photos and were skipped."
+        : "You can add more than one. Photos are lightly shrunk to save space.";
+    });
+  });
+
+  function val(id) { return $(id).value.trim(); }
+
+  $("form").addEventListener("submit", function (e) {
+    e.preventDefault();
+    var entry = {
+      from: val("from").toUpperCase(),
+      to: val("to").toUpperCase(),
+      location: val("location"),
+      date: $("date").value || todayStr(),
+      airline: resolveCode("airline", val("airline")),
+      type: resolveCode("type", val("type")),
+      reg: val("reg").toUpperCase(),
+      notes: val("notes"),
+      photos: pending.map(function (p) { return p.blob; }),
+      created: Date.now()
+    };
+    learnCode("airline", entry.airline);
+    learnCode("type", entry.type);
+    var hasContent = entry.from || entry.to || entry.airline || entry.type || entry.reg || entry.notes || entry.photos.length;
+    if (!hasContent) { toast("Add at least a registration, type, or photo.", true); return; }
+
+    var btn = $("save");
+    btn.disabled = true;
+    var wasEdit = editingId !== null;
+    if (wasEdit) { entry.id = editingId; entry.created = editingCreated; }
+    (wasEdit ? dbPut(entry) : dbAdd(entry)).then(function () {
+      if (wasEdit) {
+        finishEdit();
+        toast("Sighting updated");
+        refreshSuggestions();
+        show("log");
+        return;
+      }
+      toast("Sighting saved");
+      // Keep date and location (usually the same for a session); clear the rest
+      ["from", "to", "airline", "type", "reg", "notes"].forEach(function (id) { $(id).value = ""; });
+      $("airline-suggest").hidden = true;
+      $("type-suggest").hidden = true;
+      pending.forEach(function (p) { URL.revokeObjectURL(p.url); });
+      pending = [];
+      renderThumbs();
+      refreshSuggestions();
+      window.scrollTo({ top: 0, behavior: "smooth" });
+    }).catch(function () {
+      toast("Couldn\u2019t save. Phone storage may be full.", true);
+    }).then(function () { btn.disabled = false; });
+  });
+
+  // ---------- Editing ----------
+  var editingId = null, editingCreated = null;
+
+  function clearForm() {
+    ["from", "to", "location", "airline", "type", "reg", "notes"].forEach(function (id) { $(id).value = ""; });
+    $("date").value = todayStr();
+    $("airline-suggest").hidden = true;
+    $("type-suggest").hidden = true;
+    pending.forEach(function (p) { URL.revokeObjectURL(p.url); });
+    pending = [];
+    renderThumbs();
+  }
+  function finishEdit() {
+    editingId = null; editingCreated = null;
+    clearForm();
+    $("save").textContent = "Save sighting";
+    $("cancel-edit").hidden = true;
+  }
+  function startEdit(en) {
+    editingId = en.id; editingCreated = en.created;
+    pending.forEach(function (p) { URL.revokeObjectURL(p.url); });
+    pending = (en.photos || []).map(function (b) { return { blob: b, url: URL.createObjectURL(b) }; });
+    $("from").value = en.from || "";
+    $("to").value = en.to || "";
+    $("location").value = en.location || "";
+    $("date").value = en.date || todayStr();
+    $("airline").value = en.airline || "";
+    $("type").value = en.type || "";
+    $("reg").value = en.reg || "";
+    $("notes").value = en.notes || "";
+    $("airline-suggest").hidden = true;
+    $("type-suggest").hidden = true;
+    renderThumbs();
+    $("save").textContent = "Update sighting";
+    $("cancel-edit").hidden = false;
+    show("entry");
+  }
+  $("cancel-edit").addEventListener("click", function () {
+    finishEdit();
+    show("log");
+  });
+
+  // Autocomplete suggestions from past entries
+  function fillList(id, values) {
+    var dl = $(id);
+    dl.textContent = "";
+    var seen = {};
+    values.forEach(function (v) {
+      if (!v || seen[v.toLowerCase()]) return;
+      seen[v.toLowerCase()] = 1;
+      var o = document.createElement("option");
+      o.value = v;
+      dl.appendChild(o);
+    });
+  }
+  function refreshSuggestions() {
+    dbAll().then(function (all) {
+      all.sort(function (a, b) { return b.created - a.created; });
+      fillList("dl-airports", [].concat.apply([], all.map(function (e) { return [e.from, e.to]; })));
+      fillList("dl-locations", all.map(function (e) { return e.location; }));
+      fillList("dl-airlines", all.map(function (e) { return e.airline; }).concat(codeList("airline")));
+      fillList("dl-types", all.map(function (e) { return e.type; }).concat(codeList("type")));
+    }).catch(function () {});
+  }
+
+  // ---------- Log ----------
+  var logUrls = [];
+
+  function renderEntry(en) {
+    var card = document.createElement("article");
+    card.className = "entry";
+
+    var line = document.createElement("div");
+    line.className = "line";
+
+    var pic = document.createElement("button");
+    pic.type = "button";
+    pic.className = "pic";
+    if (en.photos && en.photos.length) {
+      var url = URL.createObjectURL(en.photos[0]);
+      logUrls.push(url);
+      var img = document.createElement("img");
+      img.src = url; img.alt = "Photo of " + (en.reg || en.type || "aircraft");
+      pic.appendChild(img);
+      if (en.photos.length > 1) {
+        var n = document.createElement("span");
+        n.className = "n"; n.textContent = en.photos.length;
+        pic.appendChild(n);
+      }
+      pic.setAttribute("aria-label", "View " + en.photos.length + " photo(s)");
+      pic.addEventListener("click", function () { openViewer(en.photos, captionLines(en), 0); });
+    } else {
+      pic.textContent = "\u2708";
+      pic.disabled = true;
+      pic.setAttribute("aria-label", "No photo");
+    }
+
+    var txt = document.createElement("button");
+    txt.type = "button";
+    txt.className = "txt";
+    txt.setAttribute("aria-expanded", "false");
+
+    var l1 = document.createElement("span");
+    l1.className = "l1";
+    var title = en.reg || en.type || en.airline || "Unidentified";
+    var t1 = document.createElement("span");
+    t1.className = "reg"; t1.textContent = title;
+    l1.appendChild(t1);
+    if (en.reg && en.type) {
+      var t2 = document.createElement("span");
+      t2.className = "ty"; t2.textContent = en.type;
+      l1.appendChild(t2);
+    }
+
+    var l2 = document.createElement("span");
+    l2.className = "l2";
+    var bits = [];
+    if (en.airline && title !== en.airline) bits.push(en.airline);
+    if (!en.reg && en.type && title !== en.type) bits.push(en.type);
+    if (en.from || en.to) bits.push((en.from || "?") + " to " + (en.to || "?"));
+    l2.textContent = bits.join("  |  ") || "\u00A0";
+
+    txt.appendChild(l1);
+    txt.appendChild(l2);
+
+    // Details revealed on tap
+    var more = document.createElement("div");
+    more.className = "more";
+    more.hidden = true;
+    var any = false;
+    function add(label, text) {
+      if (!text) return;
+      any = true;
+      var p = document.createElement("p");
+      p.textContent = label ? label + ": " + text : text;
+      more.appendChild(p);
+    }
+    add("Airline", en.airline);
+    add("Type", en.type);
+    add("Route", (en.from || en.to) ? (en.from || "?") + " to " + (en.to || "?") : "");
+    add("Notes", en.notes);
+    var del = document.createElement("button");
+    del.type = "button"; del.className = "del"; del.textContent = "Delete sighting";
+    del.addEventListener("click", function () {
+      if (!confirm("Delete this sighting and its photos?")) return;
+      dbDelete(en.id).then(function () { toast("Sighting deleted"); renderLog(); refreshSuggestions(); });
+    });
+    var edit = document.createElement("button");
+    edit.type = "button"; edit.className = "edit"; edit.textContent = "Edit sighting";
+    edit.addEventListener("click", function () { startEdit(en); });
+    var actions = document.createElement("div");
+    actions.className = "actions";
+    actions.appendChild(edit);
+    actions.appendChild(del);
+    more.appendChild(actions);
+
+    txt.addEventListener("click", function () {
+      var open = more.hidden;
+      more.hidden = !open;
+      txt.setAttribute("aria-expanded", open ? "true" : "false");
+    });
+
+    line.appendChild(pic);
+    line.appendChild(txt);
+    card.appendChild(line);
+    card.appendChild(more);
+    return card;
+  }
+
+  // "+ Note" button (goes in a header) and the note box (goes under it)
+  function makeNote(key, initial) {
+    var cur = initial || "";
+    var btn = document.createElement("button");
+    btn.type = "button"; btn.className = "notebtn";
+    var box = document.createElement("div");
+    box.className = "fnote";
+    function view() {
+      box.textContent = "";
+      if (cur) {
+        box.hidden = false;
+        var p = document.createElement("p");
+        p.textContent = cur;
+        box.appendChild(p);
+      } else { box.hidden = true; }
+      btn.textContent = cur ? "Edit note" : "+ Note";
+    }
+    function edit() {
+      box.hidden = false;
+      box.textContent = "";
+      var ta = document.createElement("textarea");
+      ta.value = cur; ta.rows = 3;
+      ta.placeholder = "Field notes: weather, runway in use, anything notable";
+      ta.setAttribute("aria-label", "Field note");
+      var row = document.createElement("div");
+      row.className = "fnote-actions";
+      var save = document.createElement("button");
+      save.type = "button"; save.className = "save"; save.textContent = "Save";
+      var cancel = document.createElement("button");
+      cancel.type = "button"; cancel.textContent = "Cancel";
+      save.addEventListener("click", function () {
+        var t = ta.value.trim();
+        noteSet(key, t).then(function () { cur = t; view(); }, function () { toast("Couldn\u2019t save the note.", true); });
+      });
+      cancel.addEventListener("click", view);
+      row.appendChild(save); row.appendChild(cancel);
+      box.appendChild(ta); box.appendChild(row);
+      btn.textContent = "Close";
+      ta.focus();
+    }
+    btn.addEventListener("click", function () {
+      if (box.querySelector("textarea")) view(); else edit();
+    });
+    view();
+    return { btn: btn, box: box };
+  }
+
+  function renderLog() {
+    var list = $("log-list");
+    logUrls.forEach(function (u) { URL.revokeObjectURL(u); });
+    logUrls = [];
+    list.textContent = "";
+    Promise.all([dbAll(), notesAll()]).then(function (res) {
+      var full = sortEntries(res[0]), notes = res[1];
+      updateFilterOptions(full);
+      var all = applyFilters(full);
+      $("log-count").textContent = full.length
+        ? (all.length !== full.length ? all.length + " of " + full.length : full.length) + (full.length === 1 ? " sighting" : " sightings")
+        : "";
+      var host = logView === "photos" ? $("log-photos") : logView === "stats" ? $("log-stats") : list;
+      [list, $("log-photos"), $("log-stats")].forEach(function (el) { el.hidden = el !== host; });
+      $("log-photos").textContent = "";
+      $("log-stats").textContent = "";
+      if (!all.length) {
+        emptyMsg(host, full.length ? "No matches" : "No sightings yet",
+          full.length ? "Try different search words or clear the filters." : "Save one from the New sighting tab and it will show up here.");
+        return;
+      }
+      if (host === $("log-photos")) { renderPhotos(all, host); return; }
+      if (host === $("log-stats")) { renderStats(all, full, host); return; }
+
+      var days = groupEntries(all);
+
+      days.forEach(function (day) {
+        var dh = document.createElement("div");
+        dh.className = "day";
+        var h2 = document.createElement("h2");
+        h2.textContent = day.date ? formatDate(day.date) : "No date";
+        var dn = document.createElement("span");
+        dn.className = "n"; dn.textContent = day.n;
+        var dnote = makeNote("d|" + day.date, notes["d|" + day.date]);
+        var dr = document.createElement("div");
+        dr.className = "hr";
+        dr.appendChild(dnote.btn); dr.appendChild(dn);
+        dh.appendChild(h2); dh.appendChild(dr);
+        list.appendChild(dh);
+        list.appendChild(dnote.box);
+
+        day.places.forEach(function (pl) {
+          var ph = document.createElement("div");
+          ph.className = "place";
+          var pn = document.createElement("span");
+          pn.textContent = pl.name;
+          var pc = document.createElement("span");
+          pc.className = "n"; pc.textContent = pl.items.length;
+          var pkey = "p|" + day.date + "|" + pl.key;
+          var pnote = makeNote(pkey, notes[pkey]);
+          var pr = document.createElement("div");
+          pr.className = "hr";
+          pr.appendChild(pnote.btn); pr.appendChild(pc);
+          ph.appendChild(pn); ph.appendChild(pr);
+          list.appendChild(ph);
+          list.appendChild(pnote.box);
+          pl.items.forEach(function (en) { list.appendChild(renderEntry(en)); });
+        });
+      });
+    }).catch(function () {
+      var p = document.createElement("div");
+      p.className = "empty"; p.textContent = "Couldn\u2019t load the log.";
+      list.appendChild(p);
+    });
+  }
+
+  // ---------- Search, filters, gallery, stats ----------
+  var F = { q: "", airline: "", type: "", location: "", from: "", to: "" };
+  var logView = "list";
+
+  function norm(x) { return (x || "").trim().toLowerCase(); }
+  function emptyMsg(host, title, body) {
+    var em = document.createElement("div");
+    em.className = "empty";
+    var st = document.createElement("strong");
+    st.textContent = title;
+    em.appendChild(st);
+    em.appendChild(document.createTextNode(body));
+    host.appendChild(em);
+  }
+  function applyFilters(rows) {
+    var q = norm(F.q);
+    return rows.filter(function (e) {
+      if (q) {
+        var hay = [e.reg, e.airline, e.type, e.location, e.from, e.to, e.notes].join(" ").toLowerCase();
+        if (hay.indexOf(q) < 0) return false;
+      }
+      if (F.airline && norm(e.airline) !== F.airline) return false;
+      if (F.type && norm(e.type) !== F.type) return false;
+      if (F.location && norm(e.location) !== F.location) return false;
+      if (F.from && (e.date || "") < F.from) return false;
+      if (F.to && (e.date || "") > F.to) return false;
+      return true;
+    });
+  }
+  function syncToggle() {
+    var n = ["airline", "type", "location", "from", "to"].filter(function (k) { return F[k]; }).length;
+    $("filter-toggle").textContent = n ? "Filters (" + n + ")" : "Filters";
+  }
+  function updateFilterOptions(full) {
+    [["airline", "f-airline", "All airlines"], ["type", "f-type", "All types"], ["location", "f-location", "All locations"]].forEach(function (c) {
+      var map = {};
+      full.forEach(function (e) { var k = norm(e[c[0]]); if (k && !map[k]) map[k] = (e[c[0]] || "").trim(); });
+      var keys = Object.keys(map).sort(function (a, b) { return map[a].localeCompare(map[b]); });
+      var sel = $(c[1]);
+      sel.textContent = "";
+      var o0 = document.createElement("option");
+      o0.value = ""; o0.textContent = c[2];
+      sel.appendChild(o0);
+      keys.forEach(function (k) {
+        var o = document.createElement("option");
+        o.value = k; o.textContent = map[k];
+        sel.appendChild(o);
+      });
+      if (F[c[0]] && !map[F[c[0]]]) F[c[0]] = "";
+      sel.value = F[c[0]];
+    });
+    $("f-from").value = F.from;
+    $("f-to").value = F.to;
+    syncToggle();
+  }
+  function syncSeg() {
+    document.querySelectorAll("#view-log .seg button").forEach(function (b) {
+      b.setAttribute("aria-pressed", b.getAttribute("data-lv") === logView ? "true" : "false");
+    });
+  }
+  function jumpToList(patch) {
+    Object.keys(patch).forEach(function (k) { F[k] = patch[k]; });
+    logView = "list";
+    $("q").value = F.q;
+    syncSeg();
+    renderLog();
+    window.scrollTo(0, 0);
+  }
+
+  document.querySelectorAll("#view-log .seg button").forEach(function (b) {
+    b.addEventListener("click", function () { logView = b.getAttribute("data-lv"); syncSeg(); renderLog(); });
+  });
+  var qTimer;
+  $("q").addEventListener("input", function () {
+    F.q = this.value;
+    clearTimeout(qTimer);
+    qTimer = setTimeout(renderLog, 150);
+  });
+  [["f-airline", "airline"], ["f-type", "type"], ["f-location", "location"], ["f-from", "from"], ["f-to", "to"]].forEach(function (c) {
+    $(c[0]).addEventListener("change", function () { F[c[1]] = this.value; renderLog(); });
+  });
+  $("filter-toggle").addEventListener("click", function () {
+    var f = $("filters");
+    f.hidden = !f.hidden;
+    this.setAttribute("aria-expanded", f.hidden ? "false" : "true");
+  });
+  $("f-clear").addEventListener("click", function () {
+    F = { q: "", airline: "", type: "", location: "", from: "", to: "" };
+    $("q").value = "";
+    renderLog();
+  });
+
+  // --- Photo gallery ---
+  function renderPhotos(rows, host) {
+    var tiles = [];
+    rows.forEach(function (en) { (en.photos || []).forEach(function (b, i) { tiles.push({ en: en, b: b, i: i }); }); });
+    if (!tiles.length) { emptyMsg(host, "No photos", "None of these sightings have photos."); return; }
+    var hint = document.createElement("p");
+    hint.className = "hint";
+    hint.textContent = tiles.length + (tiles.length === 1 ? " photo" : " photos") + ". Tap one to see the sighting.";
+    host.appendChild(hint);
+    var grid = document.createElement("div");
+    grid.className = "grid";
+    var io = ("IntersectionObserver" in window)
+      ? new IntersectionObserver(function (items) {
+          items.forEach(function (x) {
+            if (x.isIntersecting) { io.unobserve(x.target); x.target._load(); }
+          });
+        }, { rootMargin: "400px" })
+      : null;
+    tiles.forEach(function (t) {
+      var btn = document.createElement("button");
+      btn.type = "button"; btn.className = "tile";
+      var title = t.en.reg || t.en.type || t.en.airline || "Unidentified";
+      btn.setAttribute("aria-label", "Photo of " + title);
+      var img = document.createElement("img");
+      img.alt = "";
+      var cap = document.createElement("span");
+      cap.className = "tcap"; cap.textContent = title;
+      btn.appendChild(img); btn.appendChild(cap);
+      btn._load = function () { makeThumb(t.b, 130).then(function (r) { img.src = r.src; }, function () {}); };
+      if (io) io.observe(btn); else btn._load();
+      btn.addEventListener("click", function () { openViewer(t.en.photos, captionLines(t.en), t.i); });
+      grid.appendChild(btn);
+    });
+    host.appendChild(grid);
+  }
+
+  // --- Stats ---
+  function bump(map, label) {
+    var k = norm(label);
+    if (!k) return;
+    if (!map[k]) map[k] = { key: k, label: label.trim(), n: 0 };
+    map[k].n++;
+  }
+  function ranked(map) {
+    return Object.keys(map).map(function (k) { return map[k]; })
+      .sort(function (a, b) { return b.n - a.n || a.label.localeCompare(b.label); });
+  }
+  function statSection(host, title, items, onTap, first) {
+    var h = document.createElement("h2");
+    h.className = "sec" + (first ? " first" : "");
+    h.textContent = title;
+    host.appendChild(h);
+    if (!items.length) {
+      var p = document.createElement("p");
+      p.className = "hint"; p.textContent = "Nothing to show yet.";
+      host.appendChild(p);
+      return;
+    }
+    var max = items[0].n;
+    items.slice(0, 10).forEach(function (it) {
+      var b = document.createElement("button");
+      b.type = "button"; b.className = "statrow";
+      var fill = document.createElement("span");
+      fill.className = "fill"; fill.style.width = Math.max(4, Math.round(it.n / max * 100)) + "%";
+      var lab = document.createElement("span");
+      lab.className = "lab"; lab.textContent = it.label;
+      var num = document.createElement("span");
+      num.className = "num"; num.textContent = it.n;
+      b.appendChild(fill); b.appendChild(lab); b.appendChild(num);
+      b.addEventListener("click", function () { onTap(it); });
+      host.appendChild(b);
+    });
+    if (items.length > 10) {
+      var more = document.createElement("p");
+      more.className = "hint"; more.textContent = "Top 10 of " + items.length + ".";
+      host.appendChild(more);
+    }
+  }
+  function renderStats(rows, full, host) {
+    // Oldest sighting of each registration across the whole log
+    var firstOf = {};
+    full.forEach(function (e) {
+      var r = (e.reg || "").trim().toUpperCase();
+      if (r) firstOf[r] = e.id;   // full is newest first, so the last write is the oldest
+    });
+    var regs = {}, airlines = {}, types = {}, places = {}, days = {};
+    var photos = 0, firsts = 0, repeats = 0, noReg = 0;
+    rows.forEach(function (e) {
+      photos += (e.photos || []).length;
+      bump(airlines, e.airline); bump(types, e.type); bump(places, e.location);
+      if (e.date) days[e.date] = 1;
+      var r = (e.reg || "").trim().toUpperCase();
+      if (!r) { noReg++; return; }
+      bump(regs, r);
+      if (firstOf[r] === e.id) firsts++; else repeats++;
+    });
+    var tiles = document.createElement("div");
+    tiles.className = "tiles";
+    [[rows.length, "Sightings"], [photos, "Photos"], [Object.keys(days).length, "Days out"],
+     [Object.keys(regs).length, "Aircraft"], [firsts, "First sightings"], [repeats, "Repeat sightings"]].forEach(function (t) {
+      var d = document.createElement("div");
+      d.className = "stat";
+      var b = document.createElement("b"); b.textContent = t[0];
+      var sp = document.createElement("span"); sp.textContent = t[1];
+      d.appendChild(b); d.appendChild(sp);
+      tiles.appendChild(d);
+    });
+    host.appendChild(tiles);
+    var note = document.createElement("p");
+    note.className = "hint";
+    note.textContent = "First or repeat is judged by registration across your whole log" +
+      (noReg ? ". " + noReg + (noReg === 1 ? " sighting has" : " sightings have") + " no registration and isn\u2019t counted." : ".");
+    host.appendChild(note);
+
+    var multi = ranked(regs).filter(function (x) { return x.n > 1; });
+    statSection(host, "Seen more than once", multi, function (it) { jumpToList({ q: it.label }); }, false);
+    statSection(host, "Airlines", ranked(airlines), function (it) { jumpToList({ airline: it.key }); }, false);
+    statSection(host, "Aircraft types", ranked(types), function (it) { jumpToList({ type: it.key }); }, false);
+    statSection(host, "Locations", ranked(places), function (it) { jumpToList({ location: it.key }); }, false);
+  }
+
+  // ---------- Photo viewer ----------
+  var viewerUrls = [];
+  function captionLines(en) {
+    var title = [en.reg, en.type].filter(Boolean).join("  ") || en.airline || "Unidentified";
+    var out = [title];
+    if (en.airline && en.airline !== title) out.push(en.airline);
+    if (en.from || en.to) out.push((en.from || "?") + " to " + (en.to || "?"));
+    var where = [formatDate(en.date), en.location].filter(Boolean).join(", ");
+    if (where) out.push(where);
+    if (en.notes) out.push(en.notes);
+    return out;
+  }
+  function openViewer(blobs, lines, start) {
+    var strip = $("viewer-strip");
+    strip.textContent = "";
+    var cap = $("viewer-cap");
+    cap.textContent = "";
+    (lines || []).forEach(function (t, i) {
+      var d = document.createElement("div");
+      if (i === 0) d.className = "t";
+      d.textContent = t;
+      cap.appendChild(d);
+    });
+    viewerUrls.forEach(function (u) { URL.revokeObjectURL(u); });
+    viewerUrls = blobs.map(function (b) { return URL.createObjectURL(b); });
+    viewerUrls.forEach(function (u, i) {
+      var im = document.createElement("img");
+      im.src = u; im.alt = "Photo " + (i + 1) + " of " + blobs.length;
+      strip.appendChild(im);
+    });
+    $("viewer").classList.add("open");
+    if (start) requestAnimationFrame(function () { strip.scrollLeft = start * strip.clientWidth; });
+    $("viewer-close").focus();
+  }
+  function closeViewer() {
+    $("viewer").classList.remove("open");
+    $("viewer-strip").textContent = "";
+    viewerUrls.forEach(function (u) { URL.revokeObjectURL(u); });
+    viewerUrls = [];
+  }
+  $("viewer-close").addEventListener("click", closeViewer);
+  document.addEventListener("keydown", function (e) { if (e.key === "Escape") closeViewer(); });
+
+  // ---------- Shared helpers for log + export ----------
+  function esc(x) {
+    return String(x == null ? "" : x).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;");
+  }
+  function sortEntries(all) {
+    return all.slice().sort(function (a, b) {
+      if (a.date !== b.date) return a.date < b.date ? 1 : -1;
+      return b.created - a.created;
+    });
+  }
+  // Date (major) then location (minor). Expects sorted entries.
+  function groupEntries(rows) {
+    var days = [], dayMap = {};
+    rows.forEach(function (en) {
+      var d = en.date || "";
+      var day = dayMap[d];
+      if (!day) { day = { date: d, places: [], pmap: {}, n: 0 }; dayMap[d] = day; days.push(day); }
+      var key = (en.location || "").trim().toLowerCase();
+      var pl = day.pmap[key];
+      if (!pl) { pl = { name: (en.location || "").trim() || "No location", key: key, items: [] }; day.pmap[key] = pl; day.places.push(pl); }
+      pl.items.push(en);
+      day.n++;
+    });
+    return days;
+  }
+
+  // ---------- Export ----------
+  var expTouched = false;
+  var emailCache = null;
+
+  function dateStr(d) {
+    return d.getFullYear() + "-" + String(d.getMonth() + 1).padStart(2, "0") + "-" + String(d.getDate()).padStart(2, "0");
+  }
+  function inRange(all) {
+    var f = $("exp-from").value, t = $("exp-to").value;
+    return all.filter(function (e) { return (!f || e.date >= f) && (!t || e.date <= t); });
+  }
+  function setStatus(id, text) { $(id).textContent = text; }
+
+  function refreshExportSummary() {
+    dbAll().then(function (all) {
+      var rows = inRange(all), photos = 0, bytes = 0;
+      rows.forEach(function (e) {
+        (e.photos || []).forEach(function (b) { photos++; bytes += b.size || 0; });
+      });
+      var mb = (bytes * 1.34 / 1048576);
+      $("exp-summary").textContent = rows.length
+        ? rows.length + (rows.length === 1 ? " sighting" : " sightings") + ", " + photos + (photos === 1 ? " photo" : " photos") +
+          " in this range. A backup would be about " + (mb < 0.1 ? "under 0.1" : mb.toFixed(1)) + " MB."
+        : "Nothing logged in this range.";
+    });
+  }
+  function openExport() {
+    dbAll().then(function (all) {
+      if (!expTouched && all.length) {
+        var ds = all.map(function (e) { return e.date; }).filter(Boolean).sort();
+        $("exp-from").value = ds[0];
+        $("exp-to").value = ds[ds.length - 1];
+      }
+      refreshExportSummary();
+    });
+  }
+  ["exp-from", "exp-to"].forEach(function (id) {
+    $(id).addEventListener("change", function () { expTouched = true; refreshExportSummary(); });
+  });
+  document.querySelectorAll(".chip").forEach(function (c) {
+    c.addEventListener("click", function () {
+      var r = c.getAttribute("data-range");
+      expTouched = true;
+      if (r === "all") {
+        dbAll().then(function (all) {
+          var ds = all.map(function (e) { return e.date; }).filter(Boolean).sort();
+          $("exp-from").value = ds[0] || "";
+          $("exp-to").value = ds[ds.length - 1] || "";
+          refreshExportSummary();
+        });
+        return;
+      }
+      var end = new Date(), start = new Date();
+      start.setDate(start.getDate() - (parseInt(r, 10) - 1));
+      $("exp-from").value = dateStr(start);
+      $("exp-to").value = dateStr(end);
+      refreshExportSummary();
+    });
+  });
+
+  function rangeLabel() {
+    var f = $("exp-from").value, t = $("exp-to").value;
+    if (f && t) return f === t ? formatDate(f) : formatDate(f) + " to " + formatDate(t);
+    if (f) return "From " + formatDate(f);
+    if (t) return "Up to " + formatDate(t);
+    return "All dates";
+  }
+  function fileSuffix() {
+    var f = $("exp-from").value, t = $("exp-to").value;
+    return (f || "start") + "_to_" + (t || "latest");
+  }
+  function saveFile(filename, blob) {
+    var url = URL.createObjectURL(blob);
+    var a = document.createElement("a");
+    a.href = url; a.download = filename;
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+    setTimeout(function () { URL.revokeObjectURL(url); }, 60000);
+    toast("Saved to your Downloads");
+    return Promise.resolve();
+  }
+
+  // --- thumbnails for the email ---
+  function loadBitmap(blob) {
+    if (window.createImageBitmap) {
+      return createImageBitmap(blob).catch(function () { return viaImg(); });
+    }
+    return viaImg();
+    function viaImg() {
+      return new Promise(function (resolve, reject) {
+        var url = URL.createObjectURL(blob);
+        var img = new Image();
+        img.onload = function () { URL.revokeObjectURL(url); resolve(img); };
+        img.onerror = function () { URL.revokeObjectURL(url); reject(new Error("bad image")); };
+        img.src = url;
+      });
+    }
+  }
+  // Display at `longest` px on the long side; pixels are 2x for sharp screens
+  function makeThumb(blob, longest, density, quality) {
+    density = density || 2; quality = quality || 0.78;
+    return loadBitmap(blob).then(function (bmp) {
+      var w = bmp.width || bmp.naturalWidth, h = bmp.height || bmp.naturalHeight;
+      var sc = Math.min(1, (longest * density) / Math.max(w, h));
+      var c = document.createElement("canvas");
+      c.width = Math.max(1, Math.round(w * sc));
+      c.height = Math.max(1, Math.round(h * sc));
+      c.getContext("2d").drawImage(bmp, 0, 0, c.width, c.height);
+      var dsc = Math.min(1, longest / Math.max(w, h));
+      return {
+        src: c.toDataURL("image/jpeg", quality),
+        w: Math.max(1, Math.round(w * dsc)),
+        h: Math.max(1, Math.round(h * dsc))
+      };
+    });
+  }
+
+  var emailOpts = { size: 240, qual: "high" };
+  var QUAL = { standard: { d: 2, q: 0.8 }, high: { d: 3, q: 0.9 }, max: { d: 4, q: 0.95 } };
+  function sizeNote(html) {
+    var mb = html.length / 1048576;
+    return "About " + (mb < 0.1 ? "under 0.1" : mb.toFixed(1)) + " MB.";
+  }
+  function wireSeg(id, key, parse) {
+    var btns = document.querySelectorAll("#" + id + " button");
+    btns.forEach(function (b) {
+      b.addEventListener("click", function () {
+        emailOpts[key] = parse(b.getAttribute("data-v"));
+        btns.forEach(function (x) { x.setAttribute("aria-pressed", x === b ? "true" : "false"); });
+        if (!$("email-preview").hidden) {
+          buildEmail().then(function (html) {
+            showPreview(html);
+            setStatus("email-status", "Preview updated. " + sizeNote(html));
+          }).catch(emailError);
+        }
+      });
+    });
+  }
+  wireSeg("seg-size", "size", function (v) { return parseInt(v, 10); });
+  wireSeg("seg-qual", "qual", function (v) { return v; });
+
+  var C = { ink: "#14213D", soft: "#55627A", sky: "#2F6FA3", line: "#D5DCE6" };
+  function imgTag(t) {
+    return '<img src="' + t.src + '" width="' + t.w + '" height="' + t.h + '" alt="" style="display:block;border:0;width:' + t.w + 'px;height:' + t.h + 'px;">';
+  }
+  function emailRow(en, thumbs, size) {
+    var lw = (size || 100) + 12;
+    var title = en.reg || en.type || en.airline || "Unidentified";
+    var bb = "border-bottom:1px solid " + C.line + ";";
+    var h = "<tr>";
+    h += '<td width="' + lw + '" valign="top" style="width:' + lw + 'px;padding:5px 10px 6px 0;' + bb + '">' + (thumbs.length ? imgTag(thumbs[0]) : "&nbsp;") + "</td>";
+    h += '<td valign="top" style="padding:5px 0 6px;' + bb + '">';
+    h += '<div style="font-size:17px;font-weight:bold;letter-spacing:1px;line-height:21px;">' + esc(title);
+    if (en.reg && en.type) h += ' <span style="font-size:14px;letter-spacing:0;">&nbsp;' + esc(en.type) + "</span>";
+    h += "</div>";
+    var ln = 'font-size:14px;line-height:18px;color:' + C.soft + ';';
+    if (en.airline && title !== en.airline) h += '<div style="' + ln + '">' + esc(en.airline) + "</div>";
+    if (!en.reg && en.type && title !== en.type) h += '<div style="' + ln + '">' + esc(en.type) + "</div>";
+    if (en.from || en.to) h += '<div style="' + ln + '">' + esc(en.from || "?") + " to " + esc(en.to || "?") + "</div>";
+    if (en.notes) h += '<div style="' + ln + 'font-style:italic;">' + esc(en.notes) + "</div>";
+    if (thumbs.length > 1) {
+      h += '<table cellpadding="0" cellspacing="0" border="0" style="margin-top:6px;"><tr>';
+      thumbs.slice(1).forEach(function (t) { h += '<td valign="top" style="padding-right:6px;">' + imgTag(t) + "</td>"; });
+      h += "</tr></table>";
+    }
+    h += "</td></tr>";
+    return h;
+  }
+  function noteHtml(text) {
+    return esc(text).replace(/\n/g, "<br>");
+  }
+  function emailHtml(rows, thumbMap, notes) {
+    var days = groupEntries(rows);
+    var h = '<div style="font-family:Calibri,Arial,sans-serif;font-size:14px;color:' + C.ink + ';">';
+    h += '<table cellpadding="0" cellspacing="0" border="0" width="640" style="width:640px;border-collapse:collapse;">';
+    var nstyle = 'font-size:14px;line-height:18px;font-style:italic;color:' + C.soft + ';';
+    days.forEach(function (day, di) {
+      h += '<tr><td colspan="2" style="padding:' + (di ? "16px" : "0") + ' 0 4px;border-bottom:2px solid ' + C.ink + ';font-size:18px;font-weight:bold;">' +
+        esc(day.date ? formatDate(day.date) : "No date") + "</td></tr>";
+      var dn = notes["d|" + day.date];
+      if (dn) h += '<tr><td colspan="2" style="padding:4px 0 0;' + nstyle + '">' + noteHtml(dn) + "</td></tr>";
+      day.places.forEach(function (pl) {
+        h += '<tr><td colspan="2" style="padding:8px 0 2px;color:' + C.sky + ';font-weight:bold;font-size:14px;">' + esc(pl.name) + "</td></tr>";
+        var pn = notes["p|" + day.date + "|" + pl.key];
+        if (pn) h += '<tr><td colspan="2" style="padding:0 0 2px;' + nstyle + '">' + noteHtml(pn) + "</td></tr>";
+        pl.items.forEach(function (en) { h += emailRow(en, thumbMap[en.id] || [], emailOpts.size); });
+      });
+    });
+    h += "</table></div>";
+    return h;
+  }
+
+  function buildEmail() {
+    var allPhotos = $("exp-allphotos").checked;
+    var key = [$("exp-from").value, $("exp-to").value, allPhotos, emailOpts.size, emailOpts.qual, dataVersion].join("|");
+    if (emailCache && emailCache.key === key) return Promise.resolve(emailCache.html);
+    setStatus("email-status", "Preparing email\u2026");
+    return Promise.all([dbAll(), notesAll()]).then(function (res) {
+      var all = res[0], notes = res[1];
+      var rows = sortEntries(inRange(all));
+      if (!rows.length) throw new Error("empty");
+      var total = 0, done = 0, map = {};
+      rows.forEach(function (en) { total += Math.min((en.photos || []).length, allPhotos ? 99 : 1); });
+      var chain = Promise.resolve();
+      rows.forEach(function (en) {
+        chain = chain.then(function () {
+          var blobs = (en.photos || []).slice(0, allPhotos ? 99 : 1);
+          var out = [];
+          var inner = Promise.resolve();
+          blobs.forEach(function (b, bi) {
+            inner = inner.then(function () {
+              var qq = QUAL[emailOpts.qual];
+              var sz = bi === 0 ? emailOpts.size : Math.min(emailOpts.size, 120);
+              return makeThumb(b, sz, qq.d, qq.q).then(function (t) { out.push(t); }, function () {}).then(function () {
+                done++;
+                setStatus("email-status", "Preparing photos " + done + " of " + total + "\u2026");
+              });
+            });
+          });
+          return inner.then(function () { map[en.id] = out; });
+        });
+      });
+      return chain.then(function () {
+        var html = emailHtml(rows, map, notes);
+        emailCache = { key: key, html: html };
+        return html;
+      });
+    });
+  }
+  function showPreview(html) {
+    var pv = $("email-preview");
+    pv.innerHTML = html;
+    pv.hidden = false;
+  }
+  function emailError(err) {
+    if (err && err.message === "empty") { setStatus("email-status", "Nothing logged in this date range."); toast("Nothing in this date range.", true); }
+    else { setStatus("email-status", "Couldn\u2019t build the email."); toast("Couldn\u2019t build the email.", true); }
+  }
+
+  $("email-preview-btn").addEventListener("click", function () {
+    buildEmail().then(function (html) {
+      showPreview(html);
+      setStatus("email-status", "Preview ready. " + sizeNote(html));
+    }).catch(emailError);
+  });
+
+  $("email-copy").addEventListener("click", function () {
+    var p = buildEmail();
+    function done(html) {
+      showPreview(html);
+      setStatus("email-status", "Copied. " + sizeNote(html) + " In Outlook, tap into the message body and paste.");
+      toast("Copied for Outlook");
+    }
+    function fallback() {
+      p.then(function (html) {
+        showPreview(html);
+        var ok = false;
+        try {
+          var r = document.createRange();
+          r.selectNodeContents($("email-preview"));
+          var sel = window.getSelection();
+          sel.removeAllRanges(); sel.addRange(r);
+          ok = document.execCommand("copy");
+        } catch (e) {}
+        if (ok) { setStatus("email-status", "Copied. " + sizeNote(html) + " In Outlook, tap into the message body and paste."); toast("Copied for Outlook"); }
+        else { setStatus("email-status", "Couldn\u2019t copy automatically. Download the .html file instead, open it, select all, and copy."); toast("Copy didn\u2019t work. Try Download .html.", true); }
+      }).catch(emailError);
+    }
+    if (navigator.clipboard && window.ClipboardItem) {
+      try {
+        var htmlBlob = p.then(function (h) { return new Blob([h], { type: "text/html" }); });
+        var textBlob = p.then(function (h) {
+          var t = new DOMParser().parseFromString(h, "text/html").body.textContent || "";
+          return new Blob([t], { type: "text/plain" });
+        });
+        navigator.clipboard.write([new ClipboardItem({ "text/html": htmlBlob, "text/plain": textBlob })])
+          .then(function () { return p.then(done); })
+          .catch(function (err) {
+            if (err && err.message === "empty") emailError(err); else fallback();
+          });
+        return;
+      } catch (e) {}
+    }
+    fallback();
+  });
+
+  $("email-download").addEventListener("click", function () {
+    buildEmail().then(function (html) {
+      showPreview(html);
+      setStatus("email-status", "Saved. " + sizeNote(html) + " Open the file in a browser, select all, copy, and paste into Outlook.");
+      var doc = '<!DOCTYPE html><html><head><meta charset="utf-8"><title>Plane spotting log</title></head><body style="margin:16px;">' + html + "</body></html>";
+      return saveFile("plane-log-" + fileSuffix() + ".html", new Blob([doc], { type: "text/html" }));
+    }).catch(emailError);
+  });
+
+  // --- full backup ---
+  function blobToDataURL(b) {
+    return new Promise(function (resolve, reject) {
+      var r = new FileReader();
+      r.onload = function () { resolve(r.result); };
+      r.onerror = function () { reject(r.error); };
+      r.readAsDataURL(b);
+    });
+  }
+  function dataURLToBlob(u) {
+    var i = u.indexOf(",");
+    var type = (u.slice(5, i).split(";")[0]) || "image/jpeg";
+    var bin = atob(u.slice(i + 1));
+    var arr = new Uint8Array(bin.length);
+    for (var k = 0; k < bin.length; k++) arr[k] = bin.charCodeAt(k);
+    return new Blob([arr], { type: type });
+  }
+  function buildBackup() {
+    return Promise.all([dbAll(), notesAll()]).then(function (res) {
+      var all = res[0];
+      var rows = sortEntries(inRange(all));
+      if (!rows.length) throw new Error("empty");
+      var f = $("exp-from").value, t = $("exp-to").value, rangeNotes = {};
+      Object.keys(res[1]).forEach(function (k) {
+        var d = k.split("|")[1] || "";
+        if ((!f || d >= f) && (!t || d <= t)) rangeNotes[k] = res[1][k];
+      });
+      var parts = ['{"app":"spotter-log","version":1,"exportedAt":' + JSON.stringify(new Date().toISOString()) +
+        ',"range":' + JSON.stringify({ from: $("exp-from").value || null, to: $("exp-to").value || null }) +
+        ',"customCodes":' + JSON.stringify(custom) + ',"notes":' + JSON.stringify(rangeNotes) + ',"entries":['];
+      var chain = Promise.resolve();
+      rows.forEach(function (en, i) {
+        chain = chain.then(function () {
+          return Promise.all((en.photos || []).map(blobToDataURL)).then(function (urls) {
+            var o = { from: en.from, to: en.to, location: en.location, date: en.date, airline: en.airline,
+                      type: en.type, reg: en.reg, notes: en.notes, created: en.created, photos: urls };
+            parts.push((i ? "," : "") + JSON.stringify(o));
+          });
+        });
+      });
+      return chain.then(function () { parts.push("]}"); return new Blob(parts, { type: "application/json" }); });
+    });
+  }
+  $("backup-download").addEventListener("click", function () {
+    setStatus("backup-status", "Preparing backup\u2026");
+    buildBackup().then(function (blob) {
+      setStatus("backup-status", "Backup ready (" + (blob.size / 1048576).toFixed(1) + " MB).");
+      return saveFile("plane-backup-" + fileSuffix() + ".json", blob);
+    }).catch(function (err) {
+      if (err && err.message === "empty") { setStatus("backup-status", "Nothing logged in this date range."); toast("Nothing in this date range.", true); }
+      else { setStatus("backup-status", "Couldn\u2019t build the backup."); toast("Couldn\u2019t build the backup.", true); }
+    });
+  });
+
+  function keyOf(e) { return [e.created, e.date, e.reg].join("|"); }
+  function restoreFrom(text) {
+    var obj;
+    try { obj = JSON.parse(text); } catch (e) { toast("That file isn\u2019t a valid backup.", true); return; }
+    if (!obj || obj.app !== "spotter-log" || !Array.isArray(obj.entries)) { toast("That file isn\u2019t a Spotter Log backup.", true); return; }
+    setStatus("restore-status", "Restoring\u2026");
+    dbAll().then(function (existing) {
+      var seen = {};
+      existing.forEach(function (e) { seen[keyOf(e)] = 1; });
+      var added = 0, skipped = 0, chain = Promise.resolve();
+      obj.entries.forEach(function (o) {
+        chain = chain.then(function () {
+          var entry = {
+            from: o.from || "", to: o.to || "", location: o.location || "", date: o.date || todayStr(),
+            airline: o.airline || "", type: o.type || "", reg: o.reg || "", notes: o.notes || "",
+            created: o.created || Date.now(), photos: []
+          };
+          if (seen[keyOf(entry)]) { skipped++; return; }
+          try { entry.photos = (o.photos || []).map(dataURLToBlob); } catch (e) {}
+          seen[keyOf(entry)] = 1;
+          return dbAdd(entry).then(function () { added++; });
+        });
+      });
+      return chain.then(function () {
+        var nk = Object.keys(obj.notes || {});
+        return notesAll().then(function (cur) {
+          var c2 = Promise.resolve();
+          nk.forEach(function (k) {
+            if (!cur[k] && obj.notes[k]) c2 = c2.then(function () { return noteSet(k, String(obj.notes[k])); });
+          });
+          return c2;
+        });
+      }).then(function () {
+        if (obj.customCodes) {
+          ["airline", "type"].forEach(function (k) {
+            var src = obj.customCodes[k] || {};
+            Object.keys(src).forEach(function (c) { if (!custom[k][c]) custom[k][c] = src[c]; });
+          });
+          try { localStorage.setItem(CUSTOM_KEY, JSON.stringify(custom)); } catch (e) {}
+        }
+        setStatus("restore-status", "Restored " + added + (added === 1 ? " sighting" : " sightings") +
+          (skipped ? ". Skipped " + skipped + " already on this phone." : "."));
+        toast("Backup restored");
+        refreshSuggestions();
+        refreshExportSummary();
+      });
+    }).catch(function () {
+      setStatus("restore-status", "Couldn\u2019t restore that file.");
+      toast("Couldn\u2019t restore that file.", true);
+    });
+  }
+  $("restore-file").addEventListener("change", function (e) {
+    var f = e.target.files && e.target.files[0];
+    e.target.value = "";
+    if (!f) return;
+    var r = new FileReader();
+    r.onload = function () { restoreFrom(String(r.result)); };
+    r.onerror = function () { toast("Couldn\u2019t read that file.", true); };
+    r.readAsText(f);
+  });
+
+  // ---------- Tabs ----------
+  var TITLES = {
+    entry: ["New sighting", "Log what just flew by."],
+    log: ["Log", "Everything you\u2019ve spotted."],
+    export: ["Export", "Share or back up a range of dates."]
+  };
+  function show(view) {
+    ["entry", "log", "export"].forEach(function (v) {
+      $("view-" + v).hidden = v !== view;
+      $("tab-" + v).setAttribute("aria-selected", v === view ? "true" : "false");
+    });
+    var t = TITLES[view];
+    if (view === "entry" && editingId !== null) t = ["Edit sighting", "Change anything, then update."];
+    $("title").textContent = t[0];
+    $("subtitle").textContent = t[1];
+    if (view === "log") renderLog();
+    if (view === "export") openExport();
+    window.scrollTo(0, 0);
+  }
+  document.querySelectorAll("nav.tabs button").forEach(function (b) {
+    b.addEventListener("click", function () { show(b.getAttribute("data-view")); });
+  });
+
+  // ---------- Init ----------
+  // Ask the browser not to evict our data when storage is tight
+  try { if (navigator.storage && navigator.storage.persist) navigator.storage.persist(); } catch (e) {}
+  // Offline support
+  if ("serviceWorker" in navigator && location.protocol !== "file:") {
+    window.addEventListener("load", function () {
+      navigator.serviceWorker.register("sw.js").catch(function () {});
+    });
+  }
+
+  $("date").value = todayStr();
+  show("entry");
+  openDB().then(function (d) {
+    db = d;
+    refreshSuggestions();
+  }).catch(function () {
+    usingMemory = true;
+    refreshSuggestions();
+    toast("Saving isn\u2019t available in this browser mode. Entries will be lost on close.", true);
+  });
+})();
+</script>
+</body>
+</html>
