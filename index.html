@@ -296,6 +296,7 @@
     font-family: var(--font-display); font-weight: 600; font-size: 20px; letter-spacing: 0.04em; cursor: pointer;
   }
   .seg button[aria-pressed="true"] { background: var(--ink); color: var(--bg); }
+  .seg.seg4 { grid-template-columns: repeat(4, 1fr); }
   .searchbar { display: flex; gap: 8px; margin-bottom: 8px; }
   .searchbar input, .filters select {
     font: inherit; color: var(--ink); background: var(--surface);
@@ -605,6 +606,19 @@
 
       <h2 class="sec">Email summary</h2>
       <p class="hint">A compact list grouped by date and location, with photos, made for pasting into an Outlook message.</p>
+      <span class="label">Photo size</span>
+      <div class="seg seg4" id="seg-size" role="group" aria-label="Photo size">
+        <button type="button" data-v="100" aria-pressed="false">Small</button>
+        <button type="button" data-v="160" aria-pressed="false">Medium</button>
+        <button type="button" data-v="240" aria-pressed="true">Large</button>
+        <button type="button" data-v="320" aria-pressed="false">Huge</button>
+      </div>
+      <span class="label">Photo quality</span>
+      <div class="seg" id="seg-qual" role="group" aria-label="Photo quality">
+        <button type="button" data-v="standard" aria-pressed="false">Standard</button>
+        <button type="button" data-v="high" aria-pressed="true">High</button>
+        <button type="button" data-v="max" aria-pressed="false">Max</button>
+      </div>
       <label class="check"><input type="checkbox" id="exp-allphotos"> Include every photo, not just the first</label>
       <button type="button" class="btn-primary" id="email-copy">Copy for Outlook</button>
       <div class="btn-row">
@@ -1344,7 +1358,7 @@
     syncToggle();
   }
   function syncSeg() {
-    document.querySelectorAll(".seg button").forEach(function (b) {
+    document.querySelectorAll("#view-log .seg button").forEach(function (b) {
       b.setAttribute("aria-pressed", b.getAttribute("data-lv") === logView ? "true" : "false");
     });
   }
@@ -1357,7 +1371,7 @@
     window.scrollTo(0, 0);
   }
 
-  document.querySelectorAll(".seg button").forEach(function (b) {
+  document.querySelectorAll("#view-log .seg button").forEach(function (b) {
     b.addEventListener("click", function () { logView = b.getAttribute("data-lv"); syncSeg(); renderLog(); });
   });
   var qTimer;
@@ -1688,15 +1702,40 @@
     });
   }
 
+  var emailOpts = { size: 240, qual: "high" };
+  var QUAL = { standard: { d: 2, q: 0.8 }, high: { d: 3, q: 0.9 }, max: { d: 4, q: 0.95 } };
+  function sizeNote(html) {
+    var mb = html.length / 1048576;
+    return "About " + (mb < 0.1 ? "under 0.1" : mb.toFixed(1)) + " MB.";
+  }
+  function wireSeg(id, key, parse) {
+    var btns = document.querySelectorAll("#" + id + " button");
+    btns.forEach(function (b) {
+      b.addEventListener("click", function () {
+        emailOpts[key] = parse(b.getAttribute("data-v"));
+        btns.forEach(function (x) { x.setAttribute("aria-pressed", x === b ? "true" : "false"); });
+        if (!$("email-preview").hidden) {
+          buildEmail().then(function (html) {
+            showPreview(html);
+            setStatus("email-status", "Preview updated. " + sizeNote(html));
+          }).catch(emailError);
+        }
+      });
+    });
+  }
+  wireSeg("seg-size", "size", function (v) { return parseInt(v, 10); });
+  wireSeg("seg-qual", "qual", function (v) { return v; });
+
   var C = { ink: "#14213D", soft: "#55627A", sky: "#2F6FA3", line: "#D5DCE6" };
   function imgTag(t) {
     return '<img src="' + t.src + '" width="' + t.w + '" height="' + t.h + '" alt="" style="display:block;border:0;width:' + t.w + 'px;height:' + t.h + 'px;">';
   }
-  function emailRow(en, thumbs) {
+  function emailRow(en, thumbs, size) {
+    var lw = (size || 100) + 12;
     var title = en.reg || en.type || en.airline || "Unidentified";
     var bb = "border-bottom:1px solid " + C.line + ";";
     var h = "<tr>";
-    h += '<td width="112" valign="top" style="width:112px;padding:5px 10px 6px 0;' + bb + '">' + (thumbs.length ? imgTag(thumbs[0]) : "&nbsp;") + "</td>";
+    h += '<td width="' + lw + '" valign="top" style="width:' + lw + 'px;padding:5px 10px 6px 0;' + bb + '">' + (thumbs.length ? imgTag(thumbs[0]) : "&nbsp;") + "</td>";
     h += '<td valign="top" style="padding:5px 0 6px;' + bb + '">';
     h += '<div style="font-size:17px;font-weight:bold;letter-spacing:1px;line-height:21px;">' + esc(title);
     if (en.reg && en.type) h += ' <span style="font-size:14px;letter-spacing:0;">&nbsp;' + esc(en.type) + "</span>";
@@ -1731,7 +1770,7 @@
         h += '<tr><td colspan="2" style="padding:8px 0 2px;color:' + C.sky + ';font-weight:bold;font-size:14px;">' + esc(pl.name) + "</td></tr>";
         var pn = notes["p|" + day.date + "|" + pl.key];
         if (pn) h += '<tr><td colspan="2" style="padding:0 0 2px;' + nstyle + '">' + noteHtml(pn) + "</td></tr>";
-        pl.items.forEach(function (en) { h += emailRow(en, thumbMap[en.id] || []); });
+        pl.items.forEach(function (en) { h += emailRow(en, thumbMap[en.id] || [], emailOpts.size); });
       });
     });
     h += "</table></div>";
@@ -1740,7 +1779,7 @@
 
   function buildEmail() {
     var allPhotos = $("exp-allphotos").checked;
-    var key = [$("exp-from").value, $("exp-to").value, allPhotos, dataVersion].join("|");
+    var key = [$("exp-from").value, $("exp-to").value, allPhotos, emailOpts.size, emailOpts.qual, dataVersion].join("|");
     if (emailCache && emailCache.key === key) return Promise.resolve(emailCache.html);
     setStatus("email-status", "Preparing email\u2026");
     return Promise.all([dbAll(), notesAll()]).then(function (res) {
@@ -1755,9 +1794,11 @@
           var blobs = (en.photos || []).slice(0, allPhotos ? 99 : 1);
           var out = [];
           var inner = Promise.resolve();
-          blobs.forEach(function (b) {
+          blobs.forEach(function (b, bi) {
             inner = inner.then(function () {
-              return makeThumb(b, 100, 4, 0.92).then(function (t) { out.push(t); }, function () {}).then(function () {
+              var qq = QUAL[emailOpts.qual];
+              var sz = bi === 0 ? emailOpts.size : Math.min(emailOpts.size, 120);
+              return makeThumb(b, sz, qq.d, qq.q).then(function (t) { out.push(t); }, function () {}).then(function () {
                 done++;
                 setStatus("email-status", "Preparing photos " + done + " of " + total + "\u2026");
               });
@@ -1786,7 +1827,7 @@
   $("email-preview-btn").addEventListener("click", function () {
     buildEmail().then(function (html) {
       showPreview(html);
-      setStatus("email-status", "Preview ready.");
+      setStatus("email-status", "Preview ready. " + sizeNote(html));
     }).catch(emailError);
   });
 
@@ -1794,7 +1835,7 @@
     var p = buildEmail();
     function done(html) {
       showPreview(html);
-      setStatus("email-status", "Copied. In Outlook, tap into the message body and paste.");
+      setStatus("email-status", "Copied. " + sizeNote(html) + " In Outlook, tap into the message body and paste.");
       toast("Copied for Outlook");
     }
     function fallback() {
@@ -1808,7 +1849,7 @@
           sel.removeAllRanges(); sel.addRange(r);
           ok = document.execCommand("copy");
         } catch (e) {}
-        if (ok) { setStatus("email-status", "Copied. In Outlook, tap into the message body and paste."); toast("Copied for Outlook"); }
+        if (ok) { setStatus("email-status", "Copied. " + sizeNote(html) + " In Outlook, tap into the message body and paste."); toast("Copied for Outlook"); }
         else { setStatus("email-status", "Couldn\u2019t copy automatically. Download the .html file instead, open it, select all, and copy."); toast("Copy didn\u2019t work. Try Download .html.", true); }
       }).catch(emailError);
     }
@@ -1833,7 +1874,7 @@
   $("email-download").addEventListener("click", function () {
     buildEmail().then(function (html) {
       showPreview(html);
-      setStatus("email-status", "Open the saved file in a browser, select all, copy, and paste into Outlook.");
+      setStatus("email-status", "Saved. " + sizeNote(html) + " Open the file in a browser, select all, copy, and paste into Outlook.");
       var doc = '<!DOCTYPE html><html><head><meta charset="utf-8"><title>Plane spotting log</title></head><body style="margin:16px;">' + html + "</body></html>";
       return saveFile("plane-log-" + fileSuffix() + ".html", new Blob([doc], { type: "text/html" }));
     }).catch(emailError);
