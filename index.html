@@ -6,8 +6,8 @@
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <meta name="theme-color" content="#14213D">
 <link rel="manifest" href="manifest.webmanifest">
-<link rel="icon" href="icons/icon-192.png">
-<link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
+<link rel="icon" href="icon.png">
+<link rel="apple-touch-icon" href="icon.png">
 <meta name="mobile-web-app-capable" content="yes">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -550,7 +550,7 @@
               <input type="file" id="photos" accept="image/*" multiple>
             </label>
             <div class="thumbs" id="thumbs"></div>
-            <p class="hint" id="photo-hint">You can add more than one. Photos are shrunk to save space.</p>
+            <p class="hint" id="photo-hint">You can add more than one. Photos are lightly shrunk to save space.</p>
           </div>
         </div>
 
@@ -778,7 +778,7 @@
 
   // Shrink a photo to max 1600px on the long side as JPEG
   function compress(file) {
-    var MAX = 1600, QUALITY = 0.82;
+    var MAX = 2560, QUALITY = 0.92;
     function draw(src, w, h) {
       var scale = Math.min(1, MAX / Math.max(w, h));
       var c = document.createElement("canvas");
@@ -954,7 +954,7 @@
       renderThumbs();
       $("photo-hint").textContent = ok.length < files.length
         ? "Some files couldn\u2019t be read as photos and were skipped."
-        : "You can add more than one. Photos are shrunk to save space.";
+        : "You can add more than one. Photos are lightly shrunk to save space.";
     });
   });
 
@@ -1670,17 +1670,18 @@
     }
   }
   // Display at `longest` px on the long side; pixels are 2x for sharp screens
-  function makeThumb(blob, longest) {
+  function makeThumb(blob, longest, density, quality) {
+    density = density || 2; quality = quality || 0.78;
     return loadBitmap(blob).then(function (bmp) {
       var w = bmp.width || bmp.naturalWidth, h = bmp.height || bmp.naturalHeight;
-      var sc = Math.min(1, (longest * 2) / Math.max(w, h));
+      var sc = Math.min(1, (longest * density) / Math.max(w, h));
       var c = document.createElement("canvas");
       c.width = Math.max(1, Math.round(w * sc));
       c.height = Math.max(1, Math.round(h * sc));
       c.getContext("2d").drawImage(bmp, 0, 0, c.width, c.height);
       var dsc = Math.min(1, longest / Math.max(w, h));
       return {
-        src: c.toDataURL("image/jpeg", 0.78),
+        src: c.toDataURL("image/jpeg", quality),
         w: Math.max(1, Math.round(w * dsc)),
         h: Math.max(1, Math.round(h * dsc))
       };
@@ -1756,7 +1757,7 @@
           var inner = Promise.resolve();
           blobs.forEach(function (b) {
             inner = inner.then(function () {
-              return makeThumb(b, 100).then(function (t) { out.push(t); }, function () {}).then(function () {
+              return makeThumb(b, 100, 4, 0.92).then(function (t) { out.push(t); }, function () {}).then(function () {
                 done++;
                 setStatus("email-status", "Preparing photos " + done + " of " + total + "\u2026");
               });
